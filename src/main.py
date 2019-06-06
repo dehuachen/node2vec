@@ -20,6 +20,9 @@ def parse_args():
 	Parses the node2vec arguments.
 	'''
 	parser = argparse.ArgumentParser(description="Run node2vec.")
+	
+	parser.add_argument('--nodetype', default='int',
+	                    help='Input graph node ID types')
 
 	parser.add_argument('--input', nargs='?', default='graph/karate.edgelist',
 	                    help='Input graph path')
@@ -63,14 +66,16 @@ def parse_args():
 
 	return parser.parse_args()
 
-def read_graph():
+def read_graph(nodetype):
 	'''
 	Reads the input network in networkx.
 	'''
+	
+	nodetype = int if nodetype == 'int' else str
 	if args.weighted:
-		G = nx.read_edgelist(args.input, nodetype=int, data=(('weight',float),), create_using=nx.DiGraph())
+		G = nx.read_edgelist(args.input, nodetype=nodetype, data=(('weight',float),), create_using=nx.DiGraph())
 	else:
-		G = nx.read_edgelist(args.input, nodetype=int, create_using=nx.DiGraph())
+		G = nx.read_edgelist(args.input, nodetype=nodetype, create_using=nx.DiGraph())
 		for edge in G.edges():
 			G[edge[0]][edge[1]]['weight'] = 1
 
@@ -93,7 +98,7 @@ def main(args):
 	'''
 	Pipeline for representational learning for all nodes in a graph.
 	'''
-	nx_G = read_graph()
+	nx_G = read_graph(args.nodetype)
 	G = node2vec.Graph(nx_G, args.directed, args.p, args.q)
 	G.preprocess_transition_probs()
 	walks = G.simulate_walks(args.num_walks, args.walk_length)
